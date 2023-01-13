@@ -1,68 +1,74 @@
 import { useState } from "react"
-import {json, Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import axios from "../axios/axios"
 const Login = () => {
 
     const navigate = useNavigate()
     const [login, setLogin] = useState({
-        email:'', password:''
+        email: '', password: ''
     })
 
-    const {email, password} = login
+    const { email, password } = login
 
-     const inputEvent = (e) => {
+    const inputEvent = (e) => {
 
         console.log(e.target.value)
         console.log(e.target.name)
 
-        setLogin({...login,[e.target.name]:e.target.value})
+        setLogin({ ...login, [e.target.name]: e.target.value })
     }
 
-    const onLogin = async(e) => {
+    const onLogin = async (e) => {
         e.preventDefault()
-       
+
         const userLogin = {
-            email:email, password:password
+            email: email, password: password
         }
 
-        const config ={
+        const config = {
             headers: {
                 "Content-Type": "application/json",
             }
         }
-        try{
+        try {
 
             const body = JSON.stringify(userLogin)
             console.log(body)
 
-            const res = await axios.post("/login", body,config)
+            const res = await axios.post("/login", body, config)
             alert("User Login Successfully.")
             console.log(res)
-            const token = res.data.token
+            const token = res.data.data.token
             console.log(token)
             localStorage.setItem('token', token)
-          
-            navigate("/BookList")
 
-        }catch(error){
+            navigate("/user/:userId/profile")
+
+        } catch (error) {
             alert(error, 'User invaild.')
             console.log(error.response)
         }
-    
+
     }
 
     return (
         <>
-            <div>
-            <h1>Login</h1>
-                <form >
-                    <div><input type='email' placeholder="Enter your email" name="email" value={email} onChange={inputEvent} /></div>
-                    <div><input type='password' placeholder="Enter your password" name="password" value={password} onChange={inputEvent} /></div>
-                   
-                    <div> <input type='submit' placeholder="Login" onClick={onLogin} /></div>
-                    <h4>New User? Please
+            <div className="container mt-3">
+                <h1>Login</h1>
+                <form>
+                    <div class="mb-3 col-lg-6">
+                        <label class="form-label">Email address</label>
+                        <input type="email" class="form-control" name="email" value={email} onChange={inputEvent} />
+
+                    </div>
+                    <div class="mb-3 col-lg-6">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control"name="password" value={password} onChange={inputEvent}  />
+                    </div>
+                    <p>New User? Please
                         <Link to={'/'}> Register</Link>
-                    </h4>
+                    </p>
+                    <button type="submit" class="btn btn-primary" onClick={onLogin}>Submit</button>
                 </form>
             </div>
         </>
