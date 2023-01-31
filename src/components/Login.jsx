@@ -1,14 +1,22 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import axios from "../axios/axios"
+import "../style/style.css"
+import { firebase, auth } from '../firebase';
+
+
+
 const Login = () => {
 
     const navigate = useNavigate()
     const [login, setLogin] = useState({
-        email: '', password: ''
+        phone: ""
     })
+    const [otp, setotp] = useState('');
+    const [show, setshow] = useState(false);
+    const [final, setfinal] = useState('');
 
-    const { email, password } = login
+    const { phone } = login
 
     const inputEvent = (e) => {
 
@@ -18,12 +26,11 @@ const Login = () => {
         setLogin({ ...login, [e.target.name]: e.target.value })
     }
 
-    const onLogin = async (e) => {
+    const signin = async(e) => {
         e.preventDefault()
 
-        const userLogin = {
-            email: email, password: password
-        }
+
+        const userSingup = { phone }
 
         const config = {
             headers: {
@@ -32,48 +39,86 @@ const Login = () => {
         }
         try {
 
-            const body = JSON.stringify(userLogin)
+            const body = JSON.stringify(userSingup)
             console.log(body)
 
-            const res = await axios.post("/login", body, config)
+            const res = await axios.post("/register", body, config)
             alert("User Login Successfully.")
             console.log(res)
-            const token = res.data.data.token
-            console.log(token)
-            localStorage.setItem('token', token)
-
-            navigate("/user/:userId/profile")
 
         } catch (error) {
-            alert(error, 'User invaild.')
+
             console.log(error.response)
         }
 
+     let verify = new firebase.auth.RecaptchaVerifier('recaptcha-container');
+        auth.signInWithPhoneNumber(phone, verify).then((result) => {
+            // console.log(result)
+            setfinal(result);
+            alert("otp sent")
+            setshow(true);
+        }).catch((err) => { alert(err) });
+
+        
+    }
+
+
+    const ValidateOtp = () => {
+
+        console.log(otp)
+        if (otp === null || final === null)
+            return;
+        final.confirm(otp).then((result) => {
+
+            console.log(result)
+        }).catch((err) => {
+            alert("Wrong otp");
+        })
     }
 
     return (
         <>
-            <div className="container mt-3">
-                <h1>Login</h1>
-                <form>
-                    <div class="mb-3 col-lg-6">
-                        <label class="form-label">Email address</label>
-                        <input type="email" class="form-control" name="email" value={email} onChange={inputEvent} />
+            <section>
+                <div className="form_data" style={{ display: !show ? "block" : "none" }}>
+                    <div className="form_heading">
+                        <h1>Login</h1>
+                    </div>
+                    <form >
 
+                        <div className="form_input">
+
+                            <label>Mobile Number</label>
+                            <input type='text' name='phone' placeholder="Enter Your Mobile Number" value={phone} onChange={inputEvent}></input>
+                            <div id="recaptcha-container"></div>
+
+                        </div>
+
+                        <button className="btn" onClick={signin}>Send Otp</button>
+                        <p>Don't have and account<NavLink to="register">Sing up</NavLink></p>
+                    </form>
+                </div>
+                <div className="form_data" style={{ display: show ? "block" : "none" }}>
+                    {console.log(show)}
+                    <div className="form_heading">
+                        <h1>Verify Otp</h1>
                     </div>
-                    <div class="mb-3 col-lg-6">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-control"name="password" value={password} onChange={inputEvent}  />
-                    </div>
-                    <p>New User? Please
-                        <Link to={'/'}> Register</Link>
-                    </p>
-                    <button type="submit" class="btn btn-primary" onClick={onLogin}>Submit</button>
-                </form>
-            </div>
+                    <form>
+                        <div className="form_input">
+                            <label>Mobile Number</label>
+                            <input type='text' name='phone' placeholder="Enter Your Otp" onChange={(e) => { setotp(e.target.value) }}></input>
+                        </div>
+
+                        <button className="btn" onClick={ValidateOtp}>Verify Otp</button>
+
+                    </form>
+                </div>
+            </section>
         </>
     )
 
 }
 
-export default Login
+
+export default Login;
+
+
